@@ -63,7 +63,7 @@ const App = () => {
           draggable: true,
           progress: undefined,
           theme: "light",
-          transition: Bounce,
+          transition: "Bounce",
         });
       })
       .catch((err) => {
@@ -77,7 +77,7 @@ const App = () => {
           draggable: true,
           progress: undefined,
           theme: "light",
-          transition: Bounce,
+          transition: "Bounce",
         });
       });
   };
@@ -145,7 +145,7 @@ const App = () => {
         draggable
         pauseOnHover
         theme="light"
-        transition:Bounce
+        transition="Bounce"
       />
       <ToastContainer />
     </div>
