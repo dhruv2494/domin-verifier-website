@@ -1,24 +1,47 @@
 import { logDOM } from "@testing-library/react";
 import axios from "axios";
+import "react-toastify/dist/ReactToastify.css";
+
 import React, { useEffect, useState } from "react";
 import { ReactComponent as RightIcon } from "./right.svg";
 import { ReactComponent as WrongIcon } from "./wrong.svg";
+import { ToastContainer, toast } from "react-toastify";
+
 const App = () => {
   const [value, setValue] = useState("");
   const [loader, setLoader] = useState(false);
-  const [emails, setEmails] = useState([]);
-  const [currentEmails, setCurrentEmails] = useState([]);
+
   const [validDominEmails, setValidDominEmails] = useState([]);
+  const [inValidDominEmails, setInValidDominEmails] = useState([]);
 
   const ppp = ["helllo", "world"];
 
   const verifyDomin = async () => {
-    let emailValid = validDominEmails;
+    setLoader(true);
 
     const emailPattern = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
     const emails = value.match(emailPattern) || [];
 
-    setEmails([...new Set(emails)]);
+    let emailsForTest = [...new Set(emails)].sort();
+
+    for (const email in emailsForTest) {
+      console.log("🚀 ~ verifyDomin ~ email:", email);
+      const domain = emailsForTest[email].split("@")[1];
+      try {
+        let response = await axios.get(
+          `https://domin-verifyer-server.vercel.app/verify-domain?domain=${domain}`
+        );
+        if (response.status === 200 && response?.data?.isValid) {
+          setValidDominEmails((p) => [...p, emailsForTest[email]]);
+        } else {
+          setInValidDominEmails((p) => [...p, emailsForTest[email]]);
+        }
+      } catch (error) {
+        console.log(error);
+        setInValidDominEmails((p) => [...p, emailsForTest[email]]);
+      }
+    }
+    setLoader(false);
   };
 
   const convertToText = (data) => {
@@ -31,104 +54,107 @@ const App = () => {
     navigator.clipboard
       .writeText(text)
       .then(() => {
-        alert("Emails copied to clipboard!");
+        toast.success('"Emails copied to clipboard!"', {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light",
+          transition: Bounce,
+        });
       })
       .catch((err) => {
         console.error("Failed to copy to clipboard: ", err);
-        alert("Failed to copy emails to clipboard.");
+        toast.success("Failed to copy emails to clipboard.", {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light",
+          transition: Bounce,
+        });
       });
   };
 
   return (
     <div>
-      {currentEmails && currentEmails.length > 0 && (
-        <div class="loader-line"></div>
-      )}
-      <div className="form-container">
-        <div className="instructions">
-          <p>Enter the domain and verify or copy it to the clipboard.</p>
-        </div>
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder="Enter Domains like example.com, example2.com"
-        />
-        <div
-          className="scrollbar-hidden"
-          style={{
-            maxHeight: "200px",
-            overflowY: "scroll",
-          }}
-        >
-          {emails.map((data) => {
-            return (
-              <CurrentEmails
-                email={data}
-                setValidDominEmails={setValidDominEmails}
-                setCurrentEmails={setCurrentEmails}
-              />
-            );
-          })}
-        </div>
-        <div className="button-group">
-          <button onClick={verifyDomin}>Verify</button>
-          <button onClick={copyToClipboard}>Copy</button>
+      {" "}
+      <div>
+        {loader && <div class="loader-line"></div>}
+        <div className="form-container">
+          <div className="instructions">
+            <p>Enter the domain and verify or copy it to the clipboard.</p>
+          </div>
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder="Enter Domains like example.com, example2.com"
+          />
+          <div
+            style={{
+              display: "flex",
+              gap: "10px",
+            }}
+          >
+            <div
+              className="scrollbar-hidden"
+              style={{
+                maxHeight: "200px",
+                overflowY: "scroll",
+                width: "50%",
+              }}
+            >
+              {validDominEmails.map((data) => {
+                return <CurrentEmails email={data} isforValid={true} />;
+              })}
+            </div>
+            <div
+              className="scrollbar-hidden"
+              style={{
+                maxHeight: "200px",
+                overflowY: "scroll",
+                width: "50%",
+              }}
+            >
+              {inValidDominEmails.map((data) => {
+                return <CurrentEmails email={data} isforValid={false} />;
+              })}
+            </div>
+          </div>
+          <div className="button-group">
+            <button onClick={verifyDomin}>Verify</button>
+            <button onClick={copyToClipboard}>Copy</button>
+          </div>
         </div>
       </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        transition:Bounce
+      />
+      <ToastContainer />
     </div>
   );
 };
 
 export default App;
 
-const CurrentEmails = ({ email, setValidDominEmails, setCurrentEmails }) => {
-  const [emailStatus, setEmailStatus] = useState(0);
-
-  const fetchDomin = async () => {
-    const domain = email.split("@")[1];
-    try {
-      setCurrentEmails((p) => [...p, email]);
-      let response = await axios.get(
-        `https://domin-verifyer-server.vercel.app/verify-domain?domain=${domain}`
-      );
-      if (response.status === 200 && response?.data?.isValid) {
-        setEmailStatus(1);
-        setValidDominEmails((p) => [...p, email]);
-      } else {
-        setEmailStatus(2);
-      }
-      setCurrentEmails((p) => p.filter((data) => data !== email));
-    } catch (error) {
-      console.log(error);
-      setEmailStatus(2);
-      setCurrentEmails((p) => p.filter((data) => data !== email));
-    }
-  };
-
-  useEffect(() => {
-    fetchDomin();
-  }, []);
-
-  let statusIcon;
-
-  switch (emailStatus) {
-    case 1:
-      statusIcon = <RightIcon />;
-      break;
-    case 2:
-      statusIcon = <WrongIcon />;
-      break;
-    default:
-      statusIcon = (
-        <div>
-          <div className="loader-container">
-            <div className="loader"></div>
-          </div>
-        </div>
-      );
-  }
-
+const CurrentEmails = ({ email, isforValid }) => {
   return (
     <div
       style={{
@@ -149,7 +175,7 @@ const CurrentEmails = ({ email, setValidDominEmails, setCurrentEmails }) => {
       >
         {email}
       </p>
-      {statusIcon}
+      {isforValid ? <RightIcon /> : <WrongIcon />}
     </div>
   );
 };
