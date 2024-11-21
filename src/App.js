@@ -13,8 +13,7 @@ const App = () => {
 
   const [validDominEmails, setValidDominEmails] = useState([]);
   const [inValidDominEmails, setInValidDominEmails] = useState([]);
-
-  const ppp = ["helllo", "world"];
+  const [totalMail, setTotalMail] = useState([]);
 
   const verifyDomin = async () => {
     setLoader(true);
@@ -23,6 +22,7 @@ const App = () => {
     const emails = value.match(emailPattern) || [];
 
     let emailsForTest = [...new Set(emails)].sort();
+    setTotalMail(emailsForTest);
 
     for (const email in emailsForTest) {
       console.log("🚀 ~ verifyDomin ~ email:", email);
@@ -54,7 +54,7 @@ const App = () => {
     navigator.clipboard
       .writeText(text)
       .then(() => {
-        toast.success('"Emails copied to clipboard!"', {
+        toast.success("Emails copied to clipboard!", {
           position: "top-right",
           autoClose: 5000,
           hideProgressBar: false,
@@ -68,7 +68,7 @@ const App = () => {
       })
       .catch((err) => {
         console.error("Failed to copy to clipboard: ", err);
-        toast.success("Failed to copy emails to clipboard.", {
+        toast.error("Failed to copy emails to clipboard.", {
           position: "top-right",
           autoClose: 5000,
           hideProgressBar: false,
@@ -84,7 +84,6 @@ const App = () => {
 
   return (
     <div>
-      {" "}
       <div>
         {loader && <div class="loader-line"></div>}
         <div className="form-container">
@@ -128,6 +127,27 @@ const App = () => {
               })}
             </div>
           </div>
+          {totalMail.length > 0 && (
+            <div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}
+              >
+                <p>{`Total Valid Domin Emails - ${validDominEmails.length}`}</p>
+                <p>{`Total InValid Domin Emails - ${inValidDominEmails.length}`}</p>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <p>{`All Emails - ${totalMail.length}`}</p>
+              </div>
+            </div>
+          )}
           <div className="button-group">
             <button onClick={verifyDomin}>Verify</button>
             <button onClick={copyToClipboard}>Copy</button>
